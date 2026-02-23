@@ -3,8 +3,8 @@
 * Forked the `master` branch of the original repo in response to an [npm security vulnerability issue](https://github.com/archiverjs/node-archiver/issues/819) not having been fixed for more than a year due to the original package apparently having been abandoned for an unknown reason. The fork is branched off the same code that was released as the latest known version `7.0.1` with a single additional commit by the original author called ["`esm` refactoring"](https://github.com/archiverjs/node-archiver/pull/790/changes).
 
 * The changes in the aforementioned "`esm` refactoring" commit:
-  * Added `prettier` to automatically format the code during build.
-  * Replaced single quotes with double quotes after introducing `prettier`.
+  * Added `prettier` to automatically format the code during build. Replaced single quotes with double quotes after introducing `prettier`.
+	* The CommonJS code was rewritten as ESM. Because the package has no `build` script, it means that this package can only be `import`ed now and cannot be `require()`d.
   * Added named exports: `ZipArchive`, `TarArchive`, `JsonArchive`. Use them instead of the default export.
 	  * Old approach: `import archiver from 'archiver'` and `const zipArchive = archiver('zip', options)`.
 		* New approach: `import { ZipArchive } from 'archiver'` and `new ZipArchive(options)`.
