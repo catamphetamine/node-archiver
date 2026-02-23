@@ -36,7 +36,7 @@
   },
   "scripts": {
     "build:clean": "rimraf cjs",
-    "build:cjs": "esbuild lib/**/*.js --outdir=cjs --platform=node --format=cjs",
+    "build:cjs": "babel lib --out-dir cjs",
     "build:cjs:package.json": "node scripts/create-commonjs-package-json.js",
     "build": "npm-run-all build:clean build:cjs build:cjs:package.json",
     "test": "mocha --reporter dot",
@@ -54,9 +54,11 @@
     "zip-stream": "^7.0.2"
   },
   "devDependencies": {
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
     "archiver-jsdoc-theme": "1.1.3",
     "chai": "4.5.0",
-    "esbuild": "^0.27.3",
     "jsdoc": "4.0.4",
     "mkdirp": "3.0.1",
     "mocha": "10.8.2",
