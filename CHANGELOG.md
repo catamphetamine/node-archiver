@@ -1,6 +1,6 @@
 ## `8.0.0` // 27.02.2026
 
-* Forked the `master` branch of the original repo in response to an [npm security vulnerability issue](https://github.com/archiverjs/node-archiver/issues/819) not having been fixed for more than a year due to the original package apparently having been abandoned for an unknown reason. The fork is branched off the same code that was released as the latest known version `7.0.1` with a single additional commit by the original author called ["`esm` refactoring"](https://github.com/archiverjs/node-archiver/pull/790/changes).
+* Forked the `master` branch of the [original repo](https://github.com/archiverjs/node-archiver/) in response to an [npm security vulnerability issue](https://github.com/archiverjs/node-archiver/issues/819) not having been fixed for more than a year due to the original package apparently having been abandoned for an unknown reason. The fork is branched off the same code that was released as the latest known version `7.0.1` with a single additional commit by the original author called ["`esm` refactoring"](https://github.com/archiverjs/node-archiver/pull/790/changes).
 
 * The changes in the aforementioned "`esm` refactoring" commit:
   * Added `prettier` to automatically format the code during build. Replaced single quotes with double quotes after introducing `prettier`.
