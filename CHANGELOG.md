@@ -23,6 +23,7 @@
 	  * Added the `{canOpen: false}` option mentioned above in `./lib/utils.js` in the `archiver` code in order for this to not be a breaking change or something.
 
 * Reverted the downgrade of `readdir-glob` dependency which was for unspecified reason. Now it's at version `2.x` again.
+  * (breaking change) Node.js 18+ is now required.
   * Updated `./lib/core.js` [accordingly](https://github.com/Yqnn/node-readdir-glob/issues/28)
 
 * Fixed `website/docs/quickstart.md` and `website/docs/archiver_api.md`.
