@@ -1,15 +1,32 @@
-## Changelog
+## `8.0.0` // 27.02.2026
 
-**8.0.0** - <small>_October 17, 2024_</small> — [Diff](https://github.com/archiverjs/node-archiver/compare/7.0.1...8.0.0)
+* Forked the `master` branch of the original repo in response to an [npm security vulnerability issue](https://github.com/archiverjs/node-archiver/issues/819) not having been fixed for more than a year due to the original package apparently having been abandoned for an unknown reason. The fork is branched off the same code that was released as the latest known version `7.0.1` with a single additional commit by the original author called ["`esm` refactoring"](https://github.com/archiverjs/node-archiver/pull/790/changes).
 
-**7.0.1** - <small>_March 9, 2024_</small> — [Diff](https://github.com/archiverjs/node-archiver/compare/7.0.0...7.0.1)
+* The changes in the aforementioned "`esm` refactoring" commit:
+  * Added `prettier` to automatically format the code during build.
+  * Replaced single quotes with double quotes after introducing `prettier`.
+  * Added named exports: `ZipArchive`, `TarArchive`, `JsonArchive`. Use them instead of the default export.
+	  * Old approach: `import archiver from 'archiver'` and `const zipArchive = archiver('zip', options)`.
+		* New approach: `import { ZipArchive } from 'archiver'` and `new ZipArchive(options)`.
+	* Added named export `Archiver`. It could be used to add new types of archives. Use it instead of the default export (which has been removed).
+	  * Old approach: `import archiver from 'archiver'` and `const zipArchive = archiver('zip', options)`.
+		* New approach: `import { Archiver } from 'archiver'` and `class ZipArchive extends Archiver { ... see index.js ... }` and `new ZipArchive(options)`.
+	* Removed exported functions: `registerFormat`, `isRegisteredFormat`, `create`.
+	* Updated `zip-stream` dependency from `6.x` to `7.x`.
+	  * (breaking change) Node.js 18+ is now required.
+	* Downgraded `readdir-glob` dependency from `2.x` to `1.x` for an unknown reason.
+	  * Perhaps it was because `readdir-glob@2.x` updated `minimatch` dependency to `10.x` which [broke](https://github.com/Yqnn/node-readdir-glob/issues/24) Node.js 16+ support and introduced a Node.js 20+ requirement.
 
-**7.0.0** - <small>_February 28, 2024_</small> — [Diff](https://github.com/archiverjs/node-archiver/compare/6.0.2...7.0.0)
+* Updated `is-stream` dependency from `3.x` to `4.x`
+  * (breaking change) Node.js 18+ is now required.
+	* (breaking change) The `isStream()` method now also ensures that the stream is not closed. One can pass [`{canOpen: false}`](https://github.com/sindresorhus/is-stream/pull/20) to bring back the old behavior.
+	  * Added the `{canOpen: false}` option mentioned above in `./lib/utils.js` in the `archiver` code in order for this to not be a breaking change or something.
 
-**6.0.2** - <small>_February 27, 2024_</small> — [Diff](https://github.com/archiverjs/node-archiver/compare/6.0.1...6.0.2)
+* Reverted the downgrade of `readdir-glob` dependency which was for unspecified reason. Now it's at version `2.x` again.
+  * Updated `./lib/core.js` [accordingly](https://github.com/Yqnn/node-readdir-glob/issues/28)
 
-**6.0.1** - <small>_September 3, 2023_</small> — [Diff](https://github.com/archiverjs/node-archiver/compare/6.0.0...6.0.1)
+* Fixed `website/docs/quickstart.md` and `website/docs/archiver_api.md`.
 
-**6.0.0** - <small>_August 17, 2023_</small> — [Diff](https://github.com/archiverjs/node-archiver/compare/5.3.2...6.0.0)
+## Older versions
 
-[Release Archive](https://github.com/archiverjs/node-archiver/releases)
+See [CHANGELOG.md](https://github.com/archiverjs/node-archiver/blob/master/CHANGELOG.md) of the original package for more info on the older versions.

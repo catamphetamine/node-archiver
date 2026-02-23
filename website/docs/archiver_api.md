@@ -6,15 +6,29 @@ sidebar_label: "Archiver"
 
 ## Archiver Class
 
+Extend it to implement a new type of archive.
+
 ```js
-new Archiver(format, options);
+import Zip from "./lib/plugins/zip.js";
+
+export class ZipArchive extends Archiver {
+  constructor(options) {
+    super(options);
+    this._format = "zip";
+    this._module = new Zip(options);
+    this._supportsDirectory = true;
+    this._supportsSymlink = true;
+    this._modulePipe();
+  }
+}
+
+new ZipArchive(options);
 ```
 
 ### constructor
 
 ##### Parameters
 
-- `format` - _String_ - The archive format to use.
 - `options` - _Object_
 
 #### Options
@@ -257,61 +271,3 @@ The entry data object may contain the following properties:
 
 - `namePrependSlash` - _Boolean_ - Prepends a forward slash to archive file paths.
 - `store` - _Boolean_ - Sets the compression method to STORE.
-
-## Format Registration
-
-### registerFormat
-
-```js
-registerFormat(format, module);
-```
-
-Registers a format for use with archiver.
-
-##### Parameters
-
-- `format` - _String_ - The name of the format.
-- `module` - _Function_ - The function for archiver to interact with.
-
-#### module
-
-```js
-module(options);
-```
-
-The `module` function should consist of the following:
-
-- a Readable Stream interface that contains the resulting archive data.
-- a `module.prototype.append` function.
-- a `module.prototype.finalize` function.
-
-##### module.prototype.append
-
-```js
-module.prototype.append(source, data, callback) {
-  // source: Buffer or Stream
-  // data: entry (meta)data
-  // callback: called when entry has been added to archive
-  callback(err, data)
-}
-```
-
-##### module.prototype.finalize
-
-```js
-module.prototype.finalize() {}
-```
-
----
-
-### isFormatRegistered
-
-```js
-isRegisteredFormat(format);
-```
-
-Check if the format is already registered.
-
-##### Parameters
-
-- `format` - _String_ - The name of the format.
