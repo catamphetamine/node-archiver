@@ -1,4 +1,4 @@
-## `8.0.0` // 27.02.2026
+## `8.0.1` // 23.02.2026
 
 * Forked the `master` branch of the [original repo](https://github.com/archiverjs/node-archiver/) in response to an [npm security vulnerability issue](https://github.com/archiverjs/node-archiver/issues/819) not having been fixed for more than a year due to the original package apparently having been abandoned for an unknown reason. The fork is branched off the same code that was released as the latest known version `7.0.1` with a single additional commit by the original author called ["`esm` refactoring"](https://github.com/archiverjs/node-archiver/pull/790/changes).
 
@@ -25,6 +25,14 @@
 * Reverted the downgrade of `readdir-glob` dependency which was for unspecified reason. Now it's at version `2.x` again.
   * (breaking change) Node.js 18+ is now required.
   * Updated `./lib/core.js` [accordingly](https://github.com/Yqnn/node-readdir-glob/issues/28)
+
+* Removed `lazystream` dependency because that package doesn't seem to be [maintained](https://github.com/archiverjs/archiver-utils/issues/191) anymore and [depends](https://github.com/jpommerening/node-lazystream/issues/7) on an old version of `readable-stream`.
+  * Replaced it with a simple function.
+
+* Added `esbuild` development dependency and added a `build` step that creates a CommonJS version of the package that can be `require()`d and not only `import`ed.
+
+* Added TypeScript definition file.
+  * Copied it from [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/archiver).
 
 * Fixed `website/docs/quickstart.md` and `website/docs/archiver_api.md`.
 

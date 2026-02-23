@@ -1,28 +1,39 @@
-import { createReadStream, lstat, readlinkSync, Stats } from "fs";
-import { isStream } from "is-stream";
-import { readdirGlob } from "readdir-glob";
-import { Readable } from "lazystream";
-import { queue } from "async";
-import {
-  dirname,
-  relative as relativePath,
-  resolve as resolvePath,
-} from "path";
-import { ArchiverError } from "./error.js";
-import { Transform } from "readable-stream";
-import {
-  dateify,
-  normalizeInputSource,
-  sanitizePath,
-  trailingSlashIt,
-} from "./utils.js";
-const { ReaddirGlob } = readdirGlob;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var Archiver_exports = {};
+__export(Archiver_exports, {
+  default: () => Archiver
+});
+module.exports = __toCommonJS(Archiver_exports);
+var import_fs = require("fs");
+var import_is_stream = require("is-stream");
+var import_readdir_glob = require("readdir-glob");
+var import_lazystream = require("./lazystream.js");
+var import_async = require("async");
+var import_path = require("path");
+var import_error = require("./error.js");
+var import_readable_stream = require("readable-stream");
+var import_utils = require("./utils.js");
+const { ReaddirGlob } = import_readdir_glob.readdirGlob;
 const win32 = process.platform === "win32";
-
-export default class Archiver extends Transform {
+class Archiver extends import_readable_stream.Transform {
   _supportsDirectory = false;
   _supportsSymlink = false;
-
   /**
    * @constructor
    * @param {String} format The archive format to use.
@@ -32,7 +43,7 @@ export default class Archiver extends Transform {
     options = {
       highWaterMark: 1024 * 1024,
       statConcurrency: 4,
-      ...options,
+      ...options
     };
     super(options);
     this.options = options;
@@ -44,11 +55,11 @@ export default class Archiver extends Transform {
     this._entriesProcessedCount = 0;
     this._fsEntriesTotalBytes = 0;
     this._fsEntriesProcessedBytes = 0;
-    this._queue = queue(this._onQueueTask.bind(this), 1);
+    this._queue = (0, import_async.queue)(this._onQueueTask.bind(this), 1);
     this._queue.drain(this._onQueueDrain.bind(this));
-    this._statQueue = queue(
+    this._statQueue = (0, import_async.queue)(
       this._onStatQueueTask.bind(this),
-      options.statConcurrency,
+      options.statConcurrency
     );
     this._statQueue.drain(this._onQueueDrain.bind(this));
     this._state = {
@@ -56,11 +67,10 @@ export default class Archiver extends Transform {
       finalize: false,
       finalizing: false,
       finalized: false,
-      modulePiped: false,
+      modulePiped: false
     };
     this._streams = [];
   }
-
   /**
    * Internal logic for `abort`.
    *
@@ -87,7 +97,7 @@ export default class Archiver extends Transform {
     data = data || {};
     let task = {
       source: null,
-      filepath: filepath,
+      filepath
     };
     if (!data.name) {
       data.name = filepath;
@@ -95,7 +105,7 @@ export default class Archiver extends Transform {
     data.sourcePath = filepath;
     task.data = data;
     this._entriesCount++;
-    if (data.stats && data.stats instanceof Stats) {
+    if (data.stats && data.stats instanceof import_fs.Stats) {
       task = this._updateQueueTaskWithStats(task, data.stats);
       if (task) {
         if (data.stats.size) {
@@ -114,11 +124,7 @@ export default class Archiver extends Transform {
    * @return void
    */
   _finalize() {
-    if (
-      this._state.finalizing ||
-      this._state.finalized ||
-      this._state.aborted
-    ) {
+    if (this._state.finalizing || this._state.finalized || this._state.aborted) {
       return;
     }
     this._state.finalizing = true;
@@ -133,19 +139,10 @@ export default class Archiver extends Transform {
    * @return {Boolean}
    */
   _maybeFinalize() {
-    if (
-      this._state.finalizing ||
-      this._state.finalized ||
-      this._state.aborted
-    ) {
+    if (this._state.finalizing || this._state.finalized || this._state.aborted) {
       return false;
     }
-    if (
-      this._state.finalize &&
-      this._pending === 0 &&
-      this._queue.idle() &&
-      this._statQueue.idle()
-    ) {
+    if (this._state.finalize && this._pending === 0 && this._queue.idle() && this._statQueue.idle()) {
       this._finalize();
       return true;
     }
@@ -169,7 +166,7 @@ export default class Archiver extends Transform {
     this._module.append(
       source,
       data,
-      function (err) {
+      function(err) {
         this._task = null;
         if (this._state.aborted) {
           this._shutdown();
@@ -180,33 +177,23 @@ export default class Archiver extends Transform {
           setImmediate(callback);
           return;
         }
-        /**
-         * Fires when the entry's input has been processed and appended to the archive.
-         *
-         * @event Archiver#entry
-         * @type {EntryData}
-         */
         this.emit("entry", data);
         this._entriesProcessedCount++;
         if (data.stats && data.stats.size) {
           this._fsEntriesProcessedBytes += data.stats.size;
         }
-        /**
-         * @event Archiver#progress
-         * @type {ProgressData}
-         */
         this.emit("progress", {
           entries: {
             total: this._entriesCount,
-            processed: this._entriesProcessedCount,
+            processed: this._entriesProcessedCount
           },
           fs: {
             totalBytes: this._fsEntriesTotalBytes,
-            processedBytes: this._fsEntriesProcessedBytes,
-          },
+            processedBytes: this._fsEntriesProcessedBytes
+          }
         });
         setImmediate(callback);
-      }.bind(this),
+      }.bind(this)
     );
   }
   /**
@@ -221,7 +208,7 @@ export default class Archiver extends Transform {
     } else if (typeof this._module.end === "function") {
       this._module.end();
     } else {
-      this.emit("error", new ArchiverError("NOENDMETHOD"));
+      this.emit("error", new import_error.ArchiverError("NOENDMETHOD"));
     }
   }
   /**
@@ -262,7 +249,7 @@ export default class Archiver extends Transform {
       prefix: null,
       sourcePath: null,
       stats: false,
-      ...data,
+      ...data
     };
     if (stats && data.stats === false) {
       data.stats = stats;
@@ -273,7 +260,7 @@ export default class Archiver extends Transform {
         data.name = data.prefix + "/" + data.name;
         data.prefix = null;
       }
-      data.name = sanitizePath(data.name);
+      data.name = (0, import_utils.sanitizePath)(data.name);
       if (data.type !== "symlink" && data.name.slice(-1) === "/") {
         isDir = true;
         data.type = "directory";
@@ -281,7 +268,6 @@ export default class Archiver extends Transform {
         data.name += "/";
       }
     }
-    // 511 === 0777; 493 === 0755; 438 === 0666; 420 === 0644
     if (typeof data.mode === "number") {
       if (win32) {
         data.mode &= 511;
@@ -294,7 +280,6 @@ export default class Archiver extends Transform {
       } else {
         data.mode = data.stats.mode & 4095;
       }
-      // stat isn't reliable on windows; force 0755 for dir
       if (win32 && isDir) {
         data.mode = 493;
       }
@@ -304,7 +289,7 @@ export default class Archiver extends Transform {
     if (data.stats && data.date === null) {
       data.date = data.stats.mtime;
     } else {
-      data.date = dateify(data.date);
+      data.date = (0, import_utils.dateify)(data.date);
     }
     return data;
   }
@@ -316,10 +301,6 @@ export default class Archiver extends Transform {
    * @return void
    */
   _onModuleError(err) {
-    /**
-     * @event Archiver#error
-     * @type {ErrorData}
-     */
     this.emit("error", err);
   }
   /**
@@ -330,19 +311,10 @@ export default class Archiver extends Transform {
    * @return void
    */
   _onQueueDrain() {
-    if (
-      this._state.finalizing ||
-      this._state.finalized ||
-      this._state.aborted
-    ) {
+    if (this._state.finalizing || this._state.finalized || this._state.aborted) {
       return;
     }
-    if (
-      this._state.finalize &&
-      this._pending === 0 &&
-      this._queue.idle() &&
-      this._statQueue.idle()
-    ) {
+    if (this._state.finalize && this._pending === 0 && this._queue.idle() && this._statQueue.idle()) {
       this._finalize();
     }
   }
@@ -361,11 +333,7 @@ export default class Archiver extends Transform {
       }
       callback();
     };
-    if (
-      this._state.finalizing ||
-      this._state.finalized ||
-      this._state.aborted
-    ) {
+    if (this._state.finalizing || this._state.finalized || this._state.aborted) {
       fullCallback();
       return;
     }
@@ -381,27 +349,19 @@ export default class Archiver extends Transform {
    * @return void
    */
   _onStatQueueTask(task, callback) {
-    if (
-      this._state.finalizing ||
-      this._state.finalized ||
-      this._state.aborted
-    ) {
+    if (this._state.finalizing || this._state.finalized || this._state.aborted) {
       callback();
       return;
     }
-    lstat(
+    (0, import_fs.lstat)(
       task.filepath,
-      function (err, stats) {
+      function(err, stats) {
         if (this._state.aborted) {
           setImmediate(callback);
           return;
         }
         if (err) {
           this._entriesCount--;
-          /**
-           * @event Archiver#warning
-           * @type {ErrorData}
-           */
           this.emit("warning", err);
           setImmediate(callback);
           return;
@@ -414,7 +374,7 @@ export default class Archiver extends Transform {
           this._queue.push(task);
         }
         setImmediate(callback);
-      }.bind(this),
+      }.bind(this)
     );
   }
   /**
@@ -454,22 +414,22 @@ export default class Archiver extends Transform {
     if (stats.isFile()) {
       task.data.type = "file";
       task.data.sourceType = "stream";
-      task.source = new Readable(function () {
-        return createReadStream(task.filepath);
+      task.source = new import_lazystream.Readable(function() {
+        return (0, import_fs.createReadStream)(task.filepath);
       });
     } else if (stats.isDirectory() && this._supportsDirectory) {
-      task.data.name = trailingSlashIt(task.data.name);
+      task.data.name = (0, import_utils.trailingSlashIt)(task.data.name);
       task.data.type = "directory";
-      task.data.sourcePath = trailingSlashIt(task.filepath);
+      task.data.sourcePath = (0, import_utils.trailingSlashIt)(task.filepath);
       task.data.sourceType = "buffer";
       task.source = Buffer.concat([]);
     } else if (stats.isSymbolicLink() && this._supportsSymlink) {
-      const linkPath = readlinkSync(task.filepath);
-      const dirName = dirname(task.filepath);
+      const linkPath = (0, import_fs.readlinkSync)(task.filepath);
+      const dirName = (0, import_path.dirname)(task.filepath);
       task.data.type = "symlink";
-      task.data.linkname = relativePath(
+      task.data.linkname = (0, import_path.relative)(
         dirName,
-        resolvePath(dirName, linkPath),
+        (0, import_path.resolve)(dirName, linkPath)
       );
       task.data.sourceType = "buffer";
       task.source = Buffer.concat([]);
@@ -477,15 +437,15 @@ export default class Archiver extends Transform {
       if (stats.isDirectory()) {
         this.emit(
           "warning",
-          new ArchiverError("DIRECTORYNOTSUPPORTED", task.data),
+          new import_error.ArchiverError("DIRECTORYNOTSUPPORTED", task.data)
         );
       } else if (stats.isSymbolicLink()) {
         this.emit(
           "warning",
-          new ArchiverError("SYMLINKNOTSUPPORTED", task.data),
+          new import_error.ArchiverError("SYMLINKNOTSUPPORTED", task.data)
         );
       } else {
-        this.emit("warning", new ArchiverError("ENTRYNOTSUPPORTED", task.data));
+        this.emit("warning", new import_error.ArchiverError("ENTRYNOTSUPPORTED", task.data));
       }
       return null;
     }
@@ -524,37 +484,37 @@ export default class Archiver extends Transform {
    */
   append(source, data) {
     if (this._state.finalize || this._state.aborted) {
-      this.emit("error", new ArchiverError("QUEUECLOSED"));
+      this.emit("error", new import_error.ArchiverError("QUEUECLOSED"));
       return this;
     }
     data = this._normalizeEntryData(data);
     if (typeof data.name !== "string" || data.name.length === 0) {
-      this.emit("error", new ArchiverError("ENTRYNAMEREQUIRED"));
+      this.emit("error", new import_error.ArchiverError("ENTRYNAMEREQUIRED"));
       return this;
     }
     if (data.type === "directory" && !this._supportsDirectory) {
       this.emit(
         "error",
-        new ArchiverError("DIRECTORYNOTSUPPORTED", { name: data.name }),
+        new import_error.ArchiverError("DIRECTORYNOTSUPPORTED", { name: data.name })
       );
       return this;
     }
-    source = normalizeInputSource(source);
+    source = (0, import_utils.normalizeInputSource)(source);
     if (Buffer.isBuffer(source)) {
       data.sourceType = "buffer";
-    } else if (isStream(source)) {
+    } else if ((0, import_is_stream.isStream)(source)) {
       data.sourceType = "stream";
     } else {
       this.emit(
         "error",
-        new ArchiverError("INPUTSTEAMBUFFERREQUIRED", { name: data.name }),
+        new import_error.ArchiverError("INPUTSTEAMBUFFERREQUIRED", { name: data.name })
       );
       return this;
     }
     this._entriesCount++;
     this._queue.push({
-      data: data,
-      source: source,
+      data,
+      source
     });
     return this;
   }
@@ -569,11 +529,11 @@ export default class Archiver extends Transform {
    */
   directory(dirpath, destpath, data) {
     if (this._state.finalize || this._state.aborted) {
-      this.emit("error", new ArchiverError("QUEUECLOSED"));
+      this.emit("error", new import_error.ArchiverError("QUEUECLOSED"));
       return this;
     }
     if (typeof dirpath !== "string" || dirpath.length === 0) {
-      this.emit("error", new ArchiverError("DIRECTORYDIRPATHREQUIRED"));
+      this.emit("error", new import_error.ArchiverError("DIRECTORYDIRPATHREQUIRED"));
       return this;
     }
     this._pending++;
@@ -591,7 +551,7 @@ export default class Archiver extends Transform {
     }
     var globOptions = {
       stat: true,
-      dot: true,
+      dot: true
     };
     function onGlobEnd() {
       this._pending--;
@@ -614,8 +574,8 @@ export default class Archiver extends Transform {
           if (entryData === false) {
             ignoreMatch = true;
           } else if (typeof entryData !== "object") {
-            throw new ArchiverError("DIRECTORYFUNCTIONINVALIDDATA", {
-              dirpath: dirpath,
+            throw new import_error.ArchiverError("DIRECTORYFUNCTIONINVALIDDATA", {
+              dirpath
             });
           }
         }
@@ -629,7 +589,7 @@ export default class Archiver extends Transform {
       }
       this._append(match.absolute, entryData);
     }
-    const globber = readdirGlob(dirpath, globOptions);
+    const globber = (0, import_readdir_glob.readdirGlob)(dirpath, globOptions);
     globber.on("error", onGlobError.bind(this));
     globber.on("match", onGlobMatch.bind(this));
     globber.on("end", onGlobEnd.bind(this));
@@ -650,11 +610,11 @@ export default class Archiver extends Transform {
    */
   file(filepath, data) {
     if (this._state.finalize || this._state.aborted) {
-      this.emit("error", new ArchiverError("QUEUECLOSED"));
+      this.emit("error", new import_error.ArchiverError("QUEUECLOSED"));
       return this;
     }
     if (typeof filepath !== "string" || filepath.length === 0) {
-      this.emit("error", new ArchiverError("FILEFILEPATHREQUIRED"));
+      this.emit("error", new import_error.ArchiverError("FILEFILEPATHREQUIRED"));
       return this;
     }
     this._append(filepath, data);
@@ -673,8 +633,8 @@ export default class Archiver extends Transform {
     this._pending++;
     options = {
       stat: true,
-      pattern: pattern,
-      ...options,
+      pattern,
+      ...options
     };
     function onGlobEnd() {
       this._pending--;
@@ -709,12 +669,12 @@ export default class Archiver extends Transform {
    */
   finalize() {
     if (this._state.aborted) {
-      var abortedError = new ArchiverError("ABORTED");
+      var abortedError = new import_error.ArchiverError("ABORTED");
       this.emit("error", abortedError);
       return Promise.reject(abortedError);
     }
     if (this._state.finalize) {
-      var finalizingError = new ArchiverError("FINALIZING");
+      var finalizingError = new import_error.ArchiverError("FINALIZING");
       this.emit("error", finalizingError);
       return Promise.reject(finalizingError);
     }
@@ -723,14 +683,14 @@ export default class Archiver extends Transform {
       this._finalize();
     }
     var self = this;
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       var errored;
-      self._module.on("end", function () {
+      self._module.on("end", function() {
         if (!errored) {
           resolve();
         }
       });
-      self._module.on("error", function (err) {
+      self._module.on("error", function(err) {
         errored = true;
         reject(err);
       });
@@ -748,24 +708,24 @@ export default class Archiver extends Transform {
    */
   symlink(filepath, target, mode) {
     if (this._state.finalize || this._state.aborted) {
-      this.emit("error", new ArchiverError("QUEUECLOSED"));
+      this.emit("error", new import_error.ArchiverError("QUEUECLOSED"));
       return this;
     }
     if (typeof filepath !== "string" || filepath.length === 0) {
-      this.emit("error", new ArchiverError("SYMLINKFILEPATHREQUIRED"));
+      this.emit("error", new import_error.ArchiverError("SYMLINKFILEPATHREQUIRED"));
       return this;
     }
     if (typeof target !== "string" || target.length === 0) {
       this.emit(
         "error",
-        new ArchiverError("SYMLINKTARGETREQUIRED", { filepath: filepath }),
+        new import_error.ArchiverError("SYMLINKTARGETREQUIRED", { filepath })
       );
       return this;
     }
     if (!this._supportsSymlink) {
       this.emit(
         "error",
-        new ArchiverError("SYMLINKNOTSUPPORTED", { filepath: filepath }),
+        new import_error.ArchiverError("SYMLINKNOTSUPPORTED", { filepath })
       );
       return this;
     }
@@ -779,8 +739,8 @@ export default class Archiver extends Transform {
     }
     this._entriesCount++;
     this._queue.push({
-      data: data,
-      source: Buffer.concat([]),
+      data,
+      source: Buffer.concat([])
     });
     return this;
   }
@@ -793,59 +753,3 @@ export default class Archiver extends Transform {
     return this._pointer;
   }
 }
-
-/**
- * @typedef {Object} CoreOptions
- * @global
- * @property {Number} [statConcurrency=4] Sets the number of workers used to
- * process the internal fs stat queue.
- */
-
-/**
- * @typedef {Object} TransformOptions
- * @property {Boolean} [allowHalfOpen=true] If set to false, then the stream
- * will automatically end the readable side when the writable side ends and vice
- * versa.
- * @property {Boolean} [readableObjectMode=false] Sets objectMode for readable
- * side of the stream. Has no effect if objectMode is true.
- * @property {Boolean} [writableObjectMode=false] Sets objectMode for writable
- * side of the stream. Has no effect if objectMode is true.
- * @property {Boolean} [decodeStrings=true] Whether or not to decode strings
- * into Buffers before passing them to _write(). `Writable`
- * @property {String} [encoding=NULL] If specified, then buffers will be decoded
- * to strings using the specified encoding. `Readable`
- * @property {Number} [highWaterMark=16kb] The maximum number of bytes to store
- * in the internal buffer before ceasing to read from the underlying resource.
- * `Readable` `Writable`
- * @property {Boolean} [objectMode=false] Whether this stream should behave as a
- * stream of objects. Meaning that stream.read(n) returns a single value instead
- * of a Buffer of size n. `Readable` `Writable`
- */
-
-/**
- * @typedef {Object} EntryData
- * @property {String} name Sets the entry name including internal path.
- * @property {(String|Date)} [date=NOW()] Sets the entry date.
- * @property {Number} [mode=D:0755/F:0644] Sets the entry permissions.
- * @property {String} [prefix] Sets a path prefix for the entry name. Useful
- * when working with methods like `directory` or `glob`.
- * @property {fs.Stats} [stats] Sets the fs stat data for this entry allowing
- * for reduction of fs stat calls when stat data is already known.
- */
-
-/**
- * @typedef {Object} ErrorData
- * @property {String} message The message of the error.
- * @property {String} code The error code assigned to this error.
- * @property {String} data Additional data provided for reporting or debugging (where available).
- */
-
-/**
- * @typedef {Object} ProgressData
- * @property {Object} entries
- * @property {Number} entries.total Number of entries that have been appended.
- * @property {Number} entries.processed Number of entries that have been processed.
- * @property {Object} fs
- * @property {Number} fs.totalBytes Number of bytes that have been appended. Calculated asynchronously and might not be accurate: it growth while entries are added. (based on fs.Stats)
- * @property {Number} fs.processedBytes Number of bytes that have been processed. (based on fs.Stats)
- */
