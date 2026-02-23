@@ -37,7 +37,8 @@
   "scripts": {
     "build:clean": "rimraf cjs",
     "build:cjs": "esbuild lib/**/*.js --outdir=cjs --platform=node --format=cjs",
-    "build": "npm-run-all build:clean build:cjs",
+    "build:cjs:package.json": "node scripts/create-commonjs-package-json.js",
+    "build": "npm-run-all build:clean build:cjs build:cjs:package.json",
     "test": "mocha --reporter dot",
     "bench": "node benchmark/simple/pack-zip.js"
   },
