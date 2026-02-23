@@ -1,6 +1,8 @@
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -14,6 +16,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var Archiver_exports = {};
 __export(Archiver_exports, {
@@ -22,14 +32,15 @@ __export(Archiver_exports, {
 module.exports = __toCommonJS(Archiver_exports);
 var import_fs = require("fs");
 var import_is_stream = require("is-stream");
-var import_readdir_glob = require("readdir-glob");
+var import_readdir_glob = __toESM(require("readdir-glob"), 1);
 var import_lazystream = require("./lazystream.js");
 var import_async = require("async");
 var import_path = require("path");
 var import_error = require("./error.js");
 var import_readable_stream = require("readable-stream");
 var import_utils = require("./utils.js");
-const { ReaddirGlob } = import_readdir_glob.readdirGlob;
+const readdirGlob = import_readdir_glob.default || import_readdir_glob.readdirGlob;
+const { ReaddirGlob } = readdirGlob;
 const win32 = process.platform === "win32";
 class Archiver extends import_readable_stream.Transform {
   _supportsDirectory = false;
@@ -589,7 +600,7 @@ class Archiver extends import_readable_stream.Transform {
       }
       this._append(match.absolute, entryData);
     }
-    const globber = (0, import_readdir_glob.readdirGlob)(dirpath, globOptions);
+    const globber = readdirGlob(dirpath, globOptions);
     globber.on("error", onGlobError.bind(this));
     globber.on("match", onGlobMatch.bind(this));
     globber.on("end", onGlobEnd.bind(this));
