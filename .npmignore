@@ -1,0 +1,25 @@
+# git
+.gitignore
+.gitattributes
+
+# prettier
+.prettierignore
+
+# babel
+babel.config.json
+
+# netlify
+netlify.toml
+
+# renovate
+renovate.json
+
+CONTRIBUTING.md
+package-lock.json
+
+/benchmark/
+/examples/
+/scripts/
+/test/
+/tmp/
+/website/

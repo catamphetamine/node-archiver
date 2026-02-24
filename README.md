@@ -2,9 +2,7 @@
 
 Creates `.zip` or `.tar` archives using Node.js Streams (supports Node.js 18+).
 
-Forked from [`archiver`](https://www.npmjs.com/package/archiver) package at its unreleased version `8.0.0`.
-
-Visit the [API documentation](https://www.archiverjs.com/) for a list of all methods available.
+[Forked](https://github.com/archiverjs/node-archiver/issues/819#issuecomment-3945988393) from [`archiver`](https://www.npmjs.com/package/archiver) package at its unreleased version `8.0.0`.
 
 ## Install
 
@@ -14,178 +12,125 @@ npm install archiver-node --save
 
 ## Use
 
-Create a utility class called `ZipArchive`.
+For simplified use, consider `archiver-node/zip` subpackage.
 
 ```js
-import { ZipArchive as ZipArchiver } from 'archiver-node'
+import ZipArchive from 'archiver-node/zip'
 
-// `WritableStream` doesn't work well with `archiver`.
-// It breaks in certain cases. Use `PassThrough` stream instead.
-// https://github.com/archiverjs/node-archiver/issues/336
-// https://github.com/catamphetamine/archiver-bug
-// import { WritableStream } from 'memory-streams'
-
-import Stream, { PassThrough } from 'stream'
-
-class ZipArchive {
-  constructor() {
-		this.outputStream = new PassThrough()
-
-    const archive = new ZipArchiver({
-      // Sets the compression level.
-      // zlib: { level: 9 }
-    })
-
-    this.archive = archive
-
-    this.promise = new Promise((resolve, reject) => {
-      // Listens for all archive data to be written.
-      // 'close' event is fired when all data has been written.
-      this.outputStream.on('close', () => {
-				this.size = archive.pointer()
-        resolve()
-      })
-
-      // // Listens for all archive data to be written.
-      // // `end` event is fired when all archive data has been consumed by a consumer stream.
-      // // @see: https://nodejs.org/api/stream.html#stream_event_end
-      // archive.on('end', function() {
-      //   this.size = archive.pointer()
-      //   resolve()
-      // })
-
-      // Catch "warnings", whatever those're.
-      archive.on('warning', function(error) {
-        reject(error)
-        // The following code sample is from `archiver` README:
-        // if (error.code === 'ENOENT') {
-        //   // `ENOENT` errors happen when a file or folder doesn't exist.
-        //   // It's not clear what are the cases when it could happen.
-        //   // And it's not clear why they're dismissed as unimportant here.
-        //   console.warn(error)
-        // } else {
-        //   reject(error)
-        // }
-      })
-
-      // Catch errors.
-      archive.on('error', reject)
-
-      // Pipe archive data to the output stream.
-      archive.pipe(this.outputStream)
-    })
-  }
-
-  /**
-   * @param {(stream.Readable|Buffer|string)} content
-   * @param {string} internalPath — Path inside the archive
-   */
-  add(content, internalPath) {
-    if (content instanceof Stream) {
-      // `Stream` is allowed.
-    } else if (content instanceof Buffer) {
-      // `Buffer` is allowed.
-    } else if (typeof content === 'string') {
-      // `string` is allowed.
-    } else {
-      const message = 'Unsupported type of content attempted to be added to a .zip archive'
-      console.log(message + ':')
-      console.log(content)
-      throw new Error(message)
-    }
-    this.archive.append(content, { name: internalPath })
-  }
-
-  /**
-   * @param {string} filePath — Path to file in the filesystem
-   * @param {string} internalPath — Path inside the archive
-   */
-  includeFile(filePath, internalPath) {
-    this.archive.file(filePath, { name: internalPath })
-  }
-
-  /**
-   * @param {string} directoryPath — Path to directory in the filesystem.
-   * @param {string} filePathPattern — File path "glob" pattern. Example: "file*.txt".
-   */
-  includeFilesByMatch(directoryPath, filePathPattern) {
-    this.archive.glob(filePathPattern, { cwd: directoryPath })
-  }
-
-  /**
-   * @param {string} directoryPath — Path to directory in the filesystem
-   * @param {string} [internalPath] — Path inside the archive. Omitting this argument will put the contents of the directory to the root of the archive.
-   */
-  includeDirectory(directoryPath, internalPath) {
-    this.archive.directory(directoryPath, internalPath || false);
-  }
-
-  /**
-   * Starts the process of writing the archive file data.
-   * @returns {stream.Readable}
-   */
-  write() {
-    // `.finalize()` starts the process of writing the archive file.
-    //
-    // `.finalize()` also returns some kind of `Promise` but it's some kind of a weird one
-    // and is not meant to be `await`ed or anything like that.
-    // https://github.com/archiverjs/node-archiver/issues/772
-    //
-    // "close", "end" or "finish" events may be fired on `this.archive`
-    // right after calling this method, so any required event handlers
-    // should have been added beforehand.
-    //
-    this.archive.finalize()
-
-    // Returns a readable `Stream` with the `.zip` archive data.
-    return this.outputStream
-  }
-
-  /**
-   * Returns the size of the resulting archive.
-   * Returns `undefined` until the archive has been written.
-   * @returns {number | undefined}
-   */
-	getSize() {
-		return this.size
-	}
-}
-```
-
-Use the utility class `ZipArchive`.
-
-```js
 const archive = new ZipArchive()
 
-// append a file from stream
-const file1 = __dirname + "/file1.txt";
-archive.add(fs.createReadStream(file1), "file1.txt");
+// Add a file from stream.
+archive.add(fs.createReadStream("/path/to/file1.txt"), "file1.txt")
 
-// append a file from string
-archive.add("string cheese!", "file2.txt");
+// Add a file from string.
+archive.add("some text", "file2.txt")
 
-// append a file from buffer
-const buffer3 = Buffer.from("buff it!");
-archive.add(buffer3, "file3.txt");
+// Add a file from buffer.
+archive.add(Buffer.from(...), "file3.txt")
 
-// append a file
-archive.includeFile("/path/to/file1.txt", "file4.txt");
+// Add a file from disk.
+archive.includeFile("/path/to/file4.txt", "file4.txt")
 
-// append files from a sub-directory and naming it `new-sub-directory` within the archive
-archive.includeDirectory("/path/to/sub-directory/", "new-sub-directory");
+// Add a directory from disk.
+archive.includeDirectory("/path/to/directory", "directory")
 
-// append files from a sub-directory, putting its contents at the root of archive
-archive.includeDirectory("/path/to/sub-directory/");
+// Add a directory from disk, putting its contents at the root of archive.
+archive.includeDirectory("/path/to/directory")
 
-// append files from a glob pattern
-archive.includeFilesByMatch("/path/to/some/directory/", "file*.txt");
+// Add all files matching a "glob" pattern.
+archive.includeFilesByMatch("/path/to/directory", "file*.txt")
 
-// finalize the archive (i.e. we are done appending files).
-const archiveDataStream = archive.write();
+// Finalize the archive, i.e. we are done adding files to it.
+const archiveDataStream = archive.write()
 
-archiveDataStream.pipe(...);
+// Pipe the archive data to an output stream.
+archiveDataStream.pipe(fs.createWriteStream("/path/to/archive.zip"))
+
+// (optional)
+// When the archive has been written.
+archive.promise.then(() => {
+  // Print the size of the archive (in bytes).
+  console.log(archive.size)
+})
 ```
 
-## Formats
+For classic use, see the [API documentation](https://www.archiverjs.com/) of the original `archiver` package.
 
-Archiver ships with out of the box support for TAR and ZIP archives.
+```js
+import { ZipArchive, TarArchive, JsonArchive } from 'archiver-node'
+
+const archive = new ZipArchive({
+  // (optional)
+  // Node.js `zlib` options such as compression level.
+  // https://nodejs.org/api/zlib
+  zlib: { level: 9 }
+})
+
+// catch "non-critical" errors
+archive.on("warning", (error) => {
+  if (error.code === "ENOENT") {
+    console.warn(error)
+  } else {
+    throw error
+  }
+})
+
+// catch errors
+archive.on("error", (error) => {
+  throw error
+})
+
+// pipe archive data to the file
+archive.pipe(fs.createWriteStream("/path/to/archive.zip"))
+
+// append a file from stream
+archive.append(fs.createReadStream("/path/to/file1.txt"), { name: "file1.txt" })
+
+// append a file from string
+archive.append("some text", { name: "file2.txt" })
+
+// append a file from buffer
+archive.append(Buffer.from(...);, { name: "file3.txt" })
+
+// append a file
+archive.file("/path/to/file4.txt", { name: "file4.txt" })
+
+// append files from a sub-directory and naming it `new-subdir` within the archive
+archive.directory("/path/to/directory", "directory")
+
+// append files from a sub-directory, putting its contents at the root of archive
+archive.directory("/path/to/directory", false)
+
+// append files from a glob pattern
+archive.glob("file*.txt", { cwd: "/path/to/directory" })
+
+// finalize the archive (ie we are done appending files but streams have to finish yet)
+// 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
+archive.finalize()
+```
+
+For implementing a new type of archive, extend the exported `Archiver` class.
+
+```js
+import { Archiver } from 'archiver-node'
+
+class NewTypeOfArchive extends Archiver {
+  constructor(options) {
+    super(options)
+    this._format = "new-type-of-archive"
+    this._module = new NewTypeOfArchiveImplementation(options)
+    this._supportsDirectory = true
+    this._supportsSymlink = true
+    this._modulePipe()
+  }
+}
+
+class NewTypeOfArchiveImplementation {
+  constructor(options) { ... }
+  append(source, data, callback) { ... }
+  finalize() { ... }
+  on() { ... }
+  pipe() { ... }
+  unpipe() { ... }
+}
+```

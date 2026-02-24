@@ -73,7 +73,7 @@ interface TransformOptions {
 	objectmode?: boolean | undefined;
 }
 
-interface ZipOptions {
+export interface ZipOptions {
 	comment?: string | undefined;
 	forceLocalTime?: boolean | undefined;
 	forceZip64?: boolean | undefined;

@@ -24,13 +24,6 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "index.js",
-    "index.cjs",
-    "index.d.ts",
-    "lib",
-    "cjs"
-  ],
   "engines": {
     "node": ">=18"
   },
