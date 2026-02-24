@@ -28,12 +28,13 @@ interface EntryData {
 	stats?: fs.Stats | undefined;
 }
 
-interface ZipEntryData extends EntryData {
+interface ZipEntryData {
 	/** Sets the compression method to STORE */
 	store?: boolean | undefined;
 }
 
-type TarEntryData = EntryData;
+interface TarEntryData {}
+interface JsonEntryData {}
 
 interface ProgressData {
 	entries: {
@@ -49,7 +50,7 @@ interface ProgressData {
 /** A function that lets you either opt out of including an entry (by returning false), or modify the contents of an entry as it is added (by returning an EntryData) */
 type EntryDataFunction = (entry: EntryData) => false | EntryData;
 
-class ArchiverError extends Error {
+declare class ArchiverError extends Error {
 	code: string; // Since archiver format support is modular, we cannot enumerate all possible error codes, as the modules can throw arbitrary ones.
 	data: any;
 	path?: any;
@@ -88,22 +89,48 @@ interface TarOptions {
 	gzipOptions?: ZlibOptions | undefined;
 }
 
-export class Archiver extends stream.Transform {
+interface JsonOptions {}
+
+export class Module<Options, AdditionalEntryData> {
+  constructor(options?: Options);
+
+  append(
+		source: Buffer | stream.Readable,
+		data: EntryData & AdditionalEntryData,
+		// If there's an `error` argument, it doesn't pass the `data` argument.
+		// Otherwise, when `error` argument is `null`, it does pass the `same `data` argument
+		// that was passed when calling the `append()` function, with potential modifications to it
+		// such as setting the values of some of its properties.
+		callback: (error: Error | null, data?: EntryData & AdditionalEntryData) => void
+	): void;
+
+  on(event: "end", listener: () => void): void;
+  on(event: "error", listener: (error: Error) => void): void;
+
+  finalize(): void;
+  pipe(): void;
+  unpipe(): void;
+}
+
+export class Archiver<
+	ModuleOptions extends Record<string, any>,
+	AdditionalEntryData extends Record<string, any>
+> extends stream.Transform {
 	_format: string;
-	_module: Module;
+	_module: Module<ModuleOptions, AdditionalEntryData>;
 	_supportsDirectory: boolean;
 	_supportsSymlink: boolean;
 	_modulePipe: () => void;
 
-	constructor(options?: ArchiverOptions);
+	constructor(options?: ArchiverOptions & ModuleOptions);
 
 	abort(): this;
-	append(source: stream.Readable | Buffer | string, data?: EntryData | ZipEntryData | TarEntryData): this;
+	append(source: stream.Readable | Buffer | string, data?: EntryData & AdditionalEntryData): this;
 
 	/** if false is passed for destpath, the path of a chunk of data in the archive is set to the root */
-	directory(dirpath: string, destpath: false | string, data?: Partial<EntryData> | EntryDataFunction): this;
-	file(filename: string, data: EntryData): this;
-	glob(pattern: string, options?: GlobOptions, data?: Partial<EntryData>): this;
+	directory(dirpath: string, destpath: false | string, data?: Partial<EntryData & AdditionalEntryData> | EntryDataFunction): this;
+	file(filename: string, data: EntryData & AdditionalEntryData): this;
+	glob(pattern: string, options?: GlobOptions, data?: Partial<EntryData & AdditionalEntryData>): this;
 	finalize(): Promise<void>;
 
 	setFormat(format: string): this;
@@ -121,18 +148,10 @@ export class Archiver extends stream.Transform {
 	on(event: "progress", listener: (progress: ProgressData) => void): this;
 	on(event: "close" | "drain" | "finish", listener: () => void): this;
 	on(event: "pipe" | "unpipe", listener: (src: stream.Readable) => void): this;
-	on(event: "entry", listener: (entry: EntryData) => void): this;
+	on(event: "entry", listener: (entry: EntryData & AdditionalEntryData) => void): this;
 	on(event: string, listener: (...args: any[]) => void): this;
 }
 
-export class ZipArchive extends Archiver {
-	constructor(options?: ArchiverOptions & ZipOptions);
-}
-
-export class TarArchive extends Archiver {
-	constructor(options?: ArchiverOptions & TarOptions);
-}
-
-export class JsonArchive extends Archiver {
-	constructor(options?: ArchiverOptions);
-}
+export class ZipArchive extends Archiver<ZipOptions, ZipEntryData> {}
+export class TarArchive extends Archiver<TarOptions, TarEntryData> {}
+export class JsonArchive extends Archiver<JsonOptions, JsonEntryData> {}
