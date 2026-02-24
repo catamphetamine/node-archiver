@@ -91,7 +91,7 @@ interface TarOptions {
 
 interface JsonOptions {}
 
-export class Module<Options, AdditionalEntryData> {
+declare class Module<Options, AdditionalEntryData> {
   constructor(options?: Options);
 
   append(
