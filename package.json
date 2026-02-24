@@ -22,6 +22,11 @@
       "import": "./index.js",
       "require": "./index.cjs"
     },
+    "./zip": {
+      "types": "./zip/index.d.ts",
+      "import": "./zip/index.js",
+      "require": "./zip/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "engines": {
