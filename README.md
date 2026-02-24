@@ -34,13 +34,15 @@ archive.includeFile("/path/to/file4.txt", "file4.txt")
 // Add a directory from disk.
 archive.includeDirectory("/path/to/directory", "directory")
 
-// Add a directory from disk, putting its contents at the root of archive.
+// Add a directory from disk, putting its contents at the root of archive,
+// i.e. without creating a sub-directory.
 archive.includeDirectory("/path/to/directory")
 
-// Add all files matching a "glob" pattern.
+// Add all files that match a "glob" pattern relative to a certain directory.
 archive.includeFilesByMatch("/path/to/directory", "file*.txt")
 
-// Finalize the archive, i.e. we are done adding files to it.
+// Finalize the archive, i.e. nothing else will be added to it.
+// It will start writing the archive data from this point.
 const archiveDataStream = archive.write()
 
 // Pipe the archive data to an output stream.
@@ -66,7 +68,7 @@ const archive = new ZipArchive({
   zlib: { level: 9 }
 })
 
-// catch "non-critical" errors
+// Catch "non-critical" errors.
 archive.on("warning", (error) => {
   if (error.code === "ENOENT") {
     console.warn(error)
@@ -75,37 +77,44 @@ archive.on("warning", (error) => {
   }
 })
 
-// catch errors
+// Catch errors.
 archive.on("error", (error) => {
   throw error
 })
 
-// pipe archive data to the file
+// Pipe the archive data to an output stream.
+// The archive data will start being written as soon as `.finalize()` is called.
 archive.pipe(fs.createWriteStream("/path/to/archive.zip"))
 
-// append a file from stream
+// Add a file from stream.
 archive.append(fs.createReadStream("/path/to/file1.txt"), { name: "file1.txt" })
 
-// append a file from string
+// Add a file from string.
 archive.append("some text", { name: "file2.txt" })
 
-// append a file from buffer
+// Add a file from buffer.
 archive.append(Buffer.from(...);, { name: "file3.txt" })
 
-// append a file
+// Add a file from disk.
 archive.file("/path/to/file4.txt", { name: "file4.txt" })
 
-// append files from a sub-directory and naming it `new-subdir` within the archive
+// Add a directory from disk.
 archive.directory("/path/to/directory", "directory")
 
-// append files from a sub-directory, putting its contents at the root of archive
+// Add a directory from disk, putting its contents at the root of archive,
+// i.e. without creating a sub-directory.
 archive.directory("/path/to/directory", false)
 
-// append files from a glob pattern
+// Add all files that match a "glob" pattern relative to a certain directory.
 archive.glob("file*.txt", { cwd: "/path/to/directory" })
 
-// finalize the archive (ie we are done appending files but streams have to finish yet)
-// 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
+// Finalize the archive, i.e. nothing else will be added to it.
+// It will start writing the archive data from this point.
+//
+// "close", "end" or "finish" events may start being emitted on the `archive` instance
+// or the output stream right after calling this method, so add any required event listeners
+// on any of those streams beforehand.
+//
 archive.finalize()
 ```
 
@@ -118,14 +127,15 @@ class NewTypeOfArchive extends Archiver {
   constructor(options) {
     super(options)
     this._format = "new-type-of-archive"
-    this._module = new NewTypeOfArchiveImplementation(options)
+    this._module = new NewTypeOfArchiveModule(options)
     this._supportsDirectory = true
     this._supportsSymlink = true
     this._modulePipe()
   }
 }
 
-class NewTypeOfArchiveImplementation {
+// See TypeScript definition of `Module` class.
+class NewTypeOfArchiveModule {
   constructor(options) { ... }
   append(source, data, callback) { ... }
   finalize() { ... }
