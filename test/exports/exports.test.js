@@ -1,10 +1,11 @@
+import { describe, it } from 'mocha'
 import { expect } from 'chai'
 
-import { Archiver, ZipArchive, TarArchive, JsonArchive } from '../index.js'
-import DefaultExportCommonJs from '../index.cjs'
+import { Archiver, ZipArchive, TarArchive, JsonArchive } from '../../index.js'
+import DefaultExportCommonJs from '../../index.cjs'
 
-import ZipExport from '../zip/index.js'
-import ZipExportCommonJs from '../zip/index.cjs'
+import ZipExport from '../../zip/index.js'
+import ZipExportCommonJs from '../../zip/index.cjs'
 
 describe('/', () => {
   it('should export ESM', () => {

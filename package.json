@@ -33,12 +33,14 @@
     "node": ">=18"
   },
   "scripts": {
+    "test": "mocha --bail \"source/**/*.test.js\" \"test/*.test.js\" \"test/!(exports)/**/*.test.js\"",
+    "test:exports": "mocha --bail \"test/exports/**/*.test.js\"",
     "build:clean": "rimraf cjs",
     "build:cjs": "babel lib --out-dir cjs",
     "build:cjs:package.json": "node scripts/create-commonjs-package-json.js",
     "build": "npm-run-all build:clean build:cjs build:cjs:package.json",
-    "test": "mocha --reporter dot",
-    "bench": "node benchmark/simple/pack-zip.js"
+    "bench": "node benchmark/simple/pack-zip.js",
+    "prepublishOnly": "npm-run-all build test test:exports"
   },
   "dependencies": {
     "async": "^3.2.6",
